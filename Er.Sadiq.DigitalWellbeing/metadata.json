@@ -1,0 +1,20 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "sadiqkhan.2503@gmail.com",
+                "Name": "Sadiq Ahmed Killedar"
+            }
+        ],
+        "Category": "Utility",
+        "Description": "A simple digital wellbeing tracker that reminds you to take breaks",
+        "Icon": "preferences-system",
+        "Id": "org.kde.digitalwellbeing",
+        "License": "GPLv3",
+        "Name": "Digital Wellbeing",
+        "Version": "1.0",
+        "Website": "https://github.com/yourusername/digitalwellbeing"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "KPackageStructure": "Plasma/Applet"
+}
