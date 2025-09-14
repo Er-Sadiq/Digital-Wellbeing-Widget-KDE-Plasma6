@@ -30,8 +30,16 @@ Add the widget from Plasma’s Add Widgets menu.
 
 ### ⚙️ Configuration
 
+
   Change break interval (default: 20 minutes)
   Customize background and text color
+
+## Demo
+
+--
+<img width="1920" height="1080" alt="Screenshot_20250907_205522" src="https://github.com/user-attachments/assets/c6fdb81e-363b-43bd-8196-fa92d67eab07" />
+<img width="537" height="314" alt="Screenshot_20250914_133147" src="https://github.com/user-attachments/assets/19ba3f98-dd88-4be0-9f12-7ca4943ea32b" />
+
 
 ## 📜 License
 MIT – free to use, modify, and share.
