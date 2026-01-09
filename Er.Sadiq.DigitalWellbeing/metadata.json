@@ -13,7 +13,7 @@
         "License": "GPLv3",
         "Name": "Digital Wellbeing",
         "Version": "1.0",
-        "Website": "https://github.com/yourusername/digitalwellbeing"
+        "Website": "https://github.com/Er-Sadiq/Digital-Wellbeing-Widget-KDE-Plasma6"
     },
     "X-Plasma-API-Minimum-Version": "6.0",
     "KPackageStructure": "Plasma/Applet"
