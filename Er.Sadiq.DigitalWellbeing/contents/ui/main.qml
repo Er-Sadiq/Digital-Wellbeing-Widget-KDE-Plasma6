@@ -118,139 +118,262 @@ PlasmoidItem {
         onTextColorChanged: {}
     }
 
-    /* -------------------------
-     *       Visual card: centered & constrained
-     *       ------------------------- */
+    // ----------------------------------------------------
+    // Environment Detection & Sizing
+    // ----------------------------------------------------
+    property bool isHorizontalPanel: Plasmoid.formFactor === PlasmaCore.Types.Horizontal
+    property bool isVerticalPanel: Plasmoid.formFactor === PlasmaCore.Types.Vertical
+    property bool isDesktop: !isHorizontalPanel && !isVerticalPanel
+
+    Layout.minimumWidth: isHorizontalPanel ? 100 : (isVerticalPanel ? 24 : 120)
+    Layout.minimumHeight: isHorizontalPanel ? 24 : (isVerticalPanel ? 100 : 44)
+    Layout.preferredWidth: isHorizontalPanel ? 250 : (isVerticalPanel ? 48 : 300)
+    Layout.preferredHeight: isHorizontalPanel ? 48 : (isVerticalPanel ? 250 : 110)
+
+    /* ====================================================
+     *       1. DESKTOP (PLANAR) UI
+     * ==================================================== */
     Rectangle {
-        id: card
-        anchors.centerIn: parent
+        id: desktopCard
+        visible: isDesktop
+        anchors.fill: parent
+        anchors.margins: Math.min(parent.width, parent.height) * 0.05
         color: getBgColor()
         clip: true
-
-        // computed paddings based on root size
-        property real hPad: Math.max(8, root.width * horizontalPaddingFactor)
-        property real vPad: Math.max(6, root.height * verticalPaddingFactor)
-
-        // keep card within available space but respect minimums
-        width: Math.max(minCardWidth, Math.min(root.width - 2 * hPad, root.width))
-        height: Math.max(minCardHeight, Math.min(root.height - 2 * vPad, root.height))
-
-        // keep a pill/radius but avoid becoming a perfect circle on extremely narrow containers
         radius: Math.min(height / 2, width * 0.25)
 
-        /* Layout: two columns, centered content */
         GridLayout {
-            id: grid
             anchors.fill: parent
-            anchors.leftMargin: card.hPad
-            anchors.rightMargin: card.hPad
-            anchors.topMargin: Math.max(2, card.height * 0.05)    // TOP margin is smaller & proportional
-            anchors.bottomMargin: Math.max(2, card.height * 0.05)
-            columns: 2
-            columnSpacing: Math.max(6, card.width * 0.03)
-            rowSpacing: Math.max(4, card.height * 0.03)
+            anchors.margins: Math.min(parent.width, parent.height) * 0.08
+            columns: desktopCard.width >= desktopCard.height * 1.2 ? 2 : 1
+            rowSpacing: Math.max(4, desktopCard.height * 0.04)
+            columnSpacing: Math.max(4, desktopCard.width * 0.04)
 
-            // LEFT column (centered horizontally & vertically)
-            ColumnLayout {
+            property real baseFontSize: Math.min(desktopCard.width, desktopCard.height) * (columns === 1 ? 0.14 : 0.20)
+
+            // Left Block: Screen Time
+            Item {
                 Layout.fillWidth: true
-                Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-                spacing: card.height * 0.02
+                Layout.fillHeight: true
 
-                Text {
-                    text: "Screen Time"
-                    font.family: lorenzoSans.name
-                    font.pointSize: Math.max(10, card.height * 0.18)
-                    font.bold: true
-                    color: getTextColor()
-                    horizontalAlignment: Text.AlignHCenter
-                    elide: Text.ElideRight
-                }
-                Text {
-                    text: root.uptimeText
-                    font.family: lorenzoSans.name
-                    font.pointSize: Math.max(11, card.height * 0.22)
-                    color: getTextColor()
-                    opacity: 0.85
-                    horizontalAlignment: Text.AlignHCenter
-                    elide: Text.ElideRight
+                Column {
+                    anchors.centerIn: parent
+                    spacing: Math.max(2, desktopCard.height * 0.02)
+
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: "Screen Time"
+                        font.family: lorenzoSans.name
+                        font.pixelSize: Math.max(8, parent.parent.baseFontSize * 0.7)
+                        font.bold: true
+                        color: getTextColor()
+                    }
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: root.uptimeText
+                        font.family: lorenzoSans.name
+                        font.pixelSize: Math.max(8, parent.parent.baseFontSize)
+                        color: getTextColor()
+                        opacity: 0.85
+                    }
                 }
             }
 
-            // RIGHT column (centered horizontally & vertically)
-            ColumnLayout {
+            // Right Block: Countdown & Progress
+            Item {
                 Layout.fillWidth: true
-                Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
-                spacing: card.height * 0.02
+                Layout.fillHeight: true
 
-                Text {
-                    id: countdown
-                    text: Logic.formatCountdown(root.remainingSeconds)
-                    font.family: lorenzoSans.name
-                    font.pointSize: Math.max(11, card.height * 0.2)
-                    font.bold: true
-                    color: getTextColor()
-                    horizontalAlignment: Text.AlignHCenter
-                    elide: Text.ElideRight
-                }
+                Column {
+                    anchors.centerIn: parent
+                    width: Math.min(parent.width * 0.9, 250)
+                    spacing: Math.max(4, desktopCard.height * 0.03)
 
-                // responsive progress bar
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: Math.max(6, card.height * 0.08)
-                    radius: Math.min(height/2, width * 0.2)
-                    color: Qt.lighter(getBgColor(), 1.08)
-                    border.width: 0
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: Logic.formatCountdown(root.remainingSeconds)
+                        font.family: lorenzoSans.name
+                        font.pixelSize: Math.max(8, parent.parent.baseFontSize)
+                        font.bold: true
+                        color: getTextColor()
+                    }
 
                     Rectangle {
-                        id: progressFill
-                        anchors.verticalCenter: parent.verticalCenter
-                        height: parent.height
-                        width: {
-                            var total = Math.max(1, getBreakIntervalMinutes() * 60)
-                            var frac = (total - root.remainingSeconds) / total
-                            return parent.width * Math.max(0, Math.min(1, frac))
-                        }
-                        radius: parent.radius
-                        gradient: Gradient {
-                            GradientStop { position: 0.0; color: getTextColor() }
-                            GradientStop { position: 1.0; color: Qt.lighter(getTextColor(), 1.2) }
-                        }
-                        opacity: 0.18
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: parent.width
+                        height: Math.max(4, parent.parent.baseFontSize * 0.3)
+                        radius: height / 2
+                        color: Qt.lighter(getBgColor(), 1.08)
+                        border.width: 0
 
-                        Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.InOutQuad } }
+                        Rectangle {
+                            anchors.left: parent.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            height: parent.height
+                            width: {
+                                var total = Math.max(1, getBreakIntervalMinutes() * 60)
+                                var frac = (total - root.remainingSeconds) / total
+                                return parent.width * Math.max(0, Math.min(1, frac))
+                            }
+                            radius: parent.radius
+                            gradient: Gradient {
+                                GradientStop { position: 0.0; color: getTextColor() }
+                                GradientStop { position: 1.0; color: Qt.lighter(getTextColor(), 1.2) }
+                            }
+                            opacity: 0.25
+                            Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.InOutQuad } }
+                        }
                     }
                 }
             }
         }
+    }
 
-        /* Break overlay: centered & responsive */
+    /* ====================================================
+     *       2. HORIZONTAL PANEL UI (Taskbar)
+     * ==================================================== */
+    RowLayout {
+        id: horizontalPanel
+        visible: isHorizontalPanel
+        anchors.fill: parent
+        anchors.leftMargin: 8
+        anchors.rightMargin: 8
+        spacing: 12
+
+        Text {
+            Layout.alignment: Qt.AlignVCenter
+            text: root.uptimeText
+            font.family: PlasmaCore.Theme.defaultFont.family
+            font.pixelSize: Math.max(10, parent.height * 0.5)
+            color: getTextColor()
+            opacity: 0.9
+        }
+
         Rectangle {
-            id: overlay
-            anchors.fill: parent
-            color: Qt.rgba(0, 0, 0, 0.55)
-            visible: root.showBreakOverlay || overlay.opacity > 0
-            opacity: root.showBreakOverlay ? 1 : 0
-            z: 10
-            radius: card.radius
-            Behavior on opacity { NumberAnimation { duration: 250 } }
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignVCenter
+            Layout.preferredHeight: Math.max(4, parent.height * 0.25)
+            radius: height / 2
+            color: Qt.lighter(getBgColor(), 1.08)
 
-            Column {
-                anchors.centerIn: parent
-                spacing: card.height * 0.04
-                Text {
-                    text: "⏳ Time's up!"
-                    font.pointSize: Math.max(12, card.height * 0.18)
-                    font.bold: true
-                    color: "white"
-                    horizontalAlignment: Text.AlignHCenter
+            Rectangle {
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                height: parent.height
+                width: {
+                    var total = Math.max(1, getBreakIntervalMinutes() * 60)
+                    var frac = (total - root.remainingSeconds) / total
+                    return parent.width * Math.max(0, Math.min(1, frac))
                 }
-                Text {
-                    text: "Take a short break."
-                    font.pointSize: Math.max(10, card.height * 0.14)
-                    color: "white"
-                    horizontalAlignment: Text.AlignHCenter
+                radius: parent.radius
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: getTextColor() }
+                    GradientStop { position: 1.0; color: Qt.lighter(getTextColor(), 1.2) }
                 }
+                opacity: 0.3
+                Behavior on width { NumberAnimation { duration: 300 } }
             }
         }
-    } // card
+
+        Text {
+            Layout.alignment: Qt.AlignVCenter
+            text: Logic.formatCountdown(root.remainingSeconds)
+            font.family: PlasmaCore.Theme.defaultFont.family
+            font.pixelSize: Math.max(10, parent.height * 0.5)
+            font.bold: true
+            color: getTextColor()
+        }
+    }
+
+    /* ====================================================
+     *       3. VERTICAL PANEL UI (Side Taskbar)
+     * ==================================================== */
+    ColumnLayout {
+        id: verticalPanel
+        visible: isVerticalPanel
+        anchors.fill: parent
+        anchors.topMargin: 8
+        anchors.bottomMargin: 8
+        spacing: 12
+
+        Text {
+            Layout.alignment: Qt.AlignHCenter
+            text: root.uptimeText
+            font.family: PlasmaCore.Theme.defaultFont.family
+            font.pixelSize: Math.max(10, parent.width * 0.35)
+            color: getTextColor()
+            opacity: 0.9
+            rotation: -90
+        }
+
+        Rectangle {
+            Layout.fillHeight: true
+            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredWidth: Math.max(4, parent.width * 0.25)
+            radius: width / 2
+            color: Qt.lighter(getBgColor(), 1.08)
+
+            Rectangle {
+                anchors.bottom: parent.bottom
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: parent.width
+                height: {
+                    var total = Math.max(1, getBreakIntervalMinutes() * 60)
+                    var frac = (total - root.remainingSeconds) / total
+                    return parent.height * Math.max(0, Math.min(1, frac))
+                }
+                radius: parent.radius
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: getTextColor() }
+                    GradientStop { position: 1.0; color: Qt.lighter(getTextColor(), 1.2) }
+                }
+                opacity: 0.3
+                Behavior on height { NumberAnimation { duration: 300 } }
+            }
+        }
+
+        Text {
+            Layout.alignment: Qt.AlignHCenter
+            text: Logic.formatCountdown(root.remainingSeconds)
+            font.family: PlasmaCore.Theme.defaultFont.family
+            font.pixelSize: Math.max(10, parent.width * 0.35)
+            font.bold: true
+            color: getTextColor()
+            rotation: -90
+        }
+    }
+
+    /* ====================================================
+     *       BREAK OVERLAY (Applies everywhere)
+     * ==================================================== */
+    Rectangle {
+        id: overlay
+        anchors.fill: parent
+        color: Qt.rgba(0, 0, 0, 0.75)
+        visible: root.showBreakOverlay || opacity > 0
+        opacity: root.showBreakOverlay ? 1 : 0
+        z: 10
+        radius: isDesktop ? desktopCard.radius : 0
+        Behavior on opacity { NumberAnimation { duration: 300 } }
+
+        ColumnLayout {
+            anchors.centerIn: parent
+            spacing: Math.max(2, Math.min(parent.width, parent.height) * 0.05)
+            
+            Text {
+                Layout.alignment: Qt.AlignHCenter
+                text: "⏳ Time's up!"
+                font.pixelSize: Math.max(12, Math.min(parent.parent.width, parent.parent.height) * 0.2)
+                font.bold: true
+                color: "white"
+            }
+            Text {
+                Layout.alignment: Qt.AlignHCenter
+                text: "Take a short break."
+                font.pixelSize: Math.max(10, Math.min(parent.parent.width, parent.parent.height) * 0.15)
+                color: "white"
+                visible: isDesktop // Only show subtitle if on desktop to save space
+            }
+        }
+    }
 }
